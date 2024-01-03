@@ -3,13 +3,14 @@ import { initializeApp } from "firebase/app";
 
 import {
   getAuth,
-  signInWithRedirect,
   signInWithPopup,
   GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
 } from "firebase/auth";
 
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
-// doc is used to getting the document instance, getdoc helps in setting the document data, setdoc helps in settting the document data.
+// doc is used to getting the document instance, getdoc helps in Getting the document data, setdoc helps in settting the document data.
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -37,3 +38,46 @@ export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
 
 // database
 export const db = getFirestore();
+
+export const createUserDocumentFromAuth = async (
+  userAuth,
+  additionalInformation = {}
+) => {
+  const userDocRef = doc(db, "users", userAuth.uid);
+
+  const userSnapshot = await getDoc(userDocRef);
+  console.log(userSnapshot);
+  console.log(userSnapshot.exists());
+
+  // if user data don't exist
+  if (!userSnapshot.exists()) {
+    const { displayName, email } = userAuth;
+    const createdAt = new Date();
+    try {
+      await setDoc(userDocRef, {
+        displayName,
+        email,
+        createdAt,
+        ...additionalInformation,
+      });
+    } catch (error) {
+      console.log("error creating the user", error.message);
+    }
+  }
+  // if user data exist
+  return userDocRef;
+};
+
+export const createAuthUserWithEmailAndPassword = async (email, password) => {
+  if (!email || !password) {
+    return;
+  }
+  return await createUserWithEmailAndPassword(auth, email, password);
+};
+
+export const SignInAuthUserWithEmailAndPassword = async (email, password) => {
+  if (!email || !password) {
+    return;
+  }
+  return await signInWithEmailAndPassword(auth, email, password);
+};
